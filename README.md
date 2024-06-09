@@ -1,6 +1,29 @@
 ![Banner_GitHub](https://github.com/OpenSourceCommunityBrasil/RscJSON/assets/53917704/093a23f0-4e81-46de-b3dd-f9ae0997f7b6)
 
-# RscJSON
+RscJSON
+=================
+
+This Delphi unit contains a JSON parser that supports Delphi 6-Delphi Athens (12) and the platforms
+Win32, Win64 and ARM Android (MacOS and iOS can work).
+
+Clone with GIT
+--------------
+```
+> git clone git@github.com:OpenSourceCommunityBrasil/RscJSON.git
+```
+or
+```
+> git clone https://github.com/OpenSourceCommunityBrasil/RscJSON.git
+```
+
+This will get you the RscJSON repository.
+
+How to install
+--------------
+1. Clone the RscJSON repository
+2. Add the RscJSON.pas unit to your project.
+
+
 
 ## What is JSON ?
 
