@@ -1,6 +1,6 @@
-ï»¿{=======================================}
+{=======================================}
 {             RSC SISTEMAS              }
-{        SOLUÃ‡Ã•ES TECNOLÃ“GICAS          }
+{        SOLUÇÕESES TECNOLÓGICAS        }
 {         rscsistemas.com.br            }
 {          +55 92 4141-2737             }
 {      contato@rscsistemas.com.br       }
@@ -469,96 +469,137 @@ end;
 
 function TRscJSONbase.InGetValue(const aValue: TRscJSONtypes): Variant;
 var
+{$IF CompilerVersion <= 15} //Delphi 6 and old
+  DecimalSeparator: Char;
+  ThousandSeparator: Char;
+  DateSeparator: Char;
+  TimeSeparator: Char;
+  ShortDateFormat: string;
+  LongDateFormat: string;
+  ShortTimeFormat: string;
+  LongTimeFormat: string;
+{$ELSE}
   fs: TFormatSettings;
+{$IFEND}
 begin
   {$IF CompilerVersion >= 24} // Delphi XE3 and newer
     {$IF Defined(MSWINDOWS)}
       fs := TFormatSettings.Create('pt-BR');
+      fs.DecimalSeparator := '.';//json sempre será¡ (.) ponto
     {$ELSE}
       fs := TFormatSettings.Invariant; // Use invariant settings for non-Windows platforms
+      fs.DecimalSeparator := '.';//json sempre será¡ (.) ponto
     {$IFEND}
-  {$ELSEIF CompilerVersion >= 15} // Delphi 6 and 7 do not have GetLocaleFormatSettings
+  {$ELSEIF CompilerVersion >= 16} // Delphi 6 do not have GetLocaleFormatSettings
     GetLocaleFormatSettings(GetThreadLocale, fs);
+    fs.DecimalSeparator := '.';//json sempre será¡ (.) ponto
   {$ELSE}
-    fs.DecimalSeparator := '.';
-    fs.ThousandSeparator := ',';
-    fs.DateSeparator := '/';
-    fs.TimeSeparator := ':';
-    fs.ShortDateFormat := 'dd/mm/yyyy';
-    fs.LongDateFormat := 'dddd, dd mmmm yyyy';
-    fs.ShortTimeFormat := 'hh:nn';
-    fs.LongTimeFormat := 'hh:nn:ss';
+  DecimalSeparator := SysUtils.DecimalSeparator;
+  ThousandSeparator := SysUtils.ThousandSeparator;
+  DateSeparator  := SysUtils.DateSeparator;
+  TimeSeparator  := SysUtils.TimeSeparator;
+  ShortDateFormat  := SysUtils.ShortDateFormat;
+  LongDateFormat  := SysUtils.LongDateFormat;
+  ShortTimeFormat := SysUtils.ShortDateFormat;
+  LongTimeFormat  := SysUtils.LongTimeFormat;
   {$IFEND}
-  fs.DecimalSeparator := '.';//json sempre serÃ¡ (.) ponto
+  try
+    {$IF CompilerVersion <= 15} //Delphi 6 and old
+    SysUtils.DecimalSeparator := '.';
+    SysUtils.ThousandSeparator := ',';
+    SysUtils.DateSeparator := '/';
+    SysUtils.TimeSeparator := ':';
+    SysUtils.ShortDateFormat := 'dd/mm/yyyy';
+    SysUtils.LongDateFormat := 'dddd, dd mmmm yyyy';
+    SysUtils.ShortDateFormat := 'hh:nn';
+    SysUtils.LongTimeFormat := 'hh:nn:ss';
+    {$IFEND}
 
-  Result  :=  Null;
-  case aValue of
-    jsBase    :
-      begin
-        if  Self <> nil then
-          Result  :=  Self.Value;
-      end;
-    jsNumber  :
-      begin
-        if  Self <> nil then
-          Result  :=  StrToFloat(VarToStr(Self.Value), fs)
-        else
-          Result  :=  0;
-      end;
-    jsString  :
-      begin
-        if  Self <> nil then
-          begin
-            if VarIsNull(Self.Value) then
-              Result  :=  'null'
-            else
-              Result  :=  Self.Value;
-          end
-        else
-          begin
-            Result  :=  '';
-          end
-      end;
-    jsWideString  :
-      begin
-        if  Self <> nil then
-          begin
-            if VarIsNull(Self.Value) then
-              Result  :=  'null'
-            else
-              Result  :=  Self.Value;
-          end
-        else
-          begin
-            Result  :=  '';
-          end
-      end;
-    jsBoolean :
-      begin
-        if  Self <> nil then
-          Result := (Self.Value = '1')  Or (Lowercase(Self.Value) = 'true')
-        else
-          Result  :=  False;
-      end;
-    jsNull    :
-      begin
-        if  Self <> nil then
-          Result  :=  Self.Value
-        else
-          Result  :=  Null;
-      end;
-    jsList    :
-      begin
-        if  Self <> nil then
-          Result  :=  Self.Value;
-      end;
-    jsObject  :
-      begin
-        if  Self <> nil then
-          Result  :=  Self.Value
-        else
-          Result  :=  Null;
-      end;
+    Result  :=  Null;
+    case aValue of
+      jsBase    :
+        begin
+          if  Self <> nil then
+            Result  :=  Self.Value;
+        end;
+      jsNumber  :
+        begin
+          if  Self <> nil then
+            {$IF CompilerVersion >= 16} //Delphi 7 and last
+            Result  :=  StrToFloat(VarToStr(Self.Value), fs)
+            {$ELSE}
+            Result  :=  StrToFloat(VarToStr(Self.Value))
+            {$IFEND}
+          else
+            Result  :=  0;
+        end;
+      jsString  :
+        begin
+          if  Self <> nil then
+            begin
+              if VarIsNull(Self.Value) then
+                Result  :=  'null'
+              else
+                Result  :=  Self.Value;
+            end
+          else
+            begin
+              Result  :=  '';
+            end
+        end;
+      jsWideString  :
+        begin
+          if  Self <> nil then
+            begin
+              if VarIsNull(Self.Value) then
+                Result  :=  'null'
+              else
+                Result  :=  Self.Value;
+            end
+          else
+            begin
+              Result  :=  '';
+            end
+        end;
+      jsBoolean :
+        begin
+          if  Self <> nil then
+            Result := (Self.Value = '1')  Or (Lowercase(Self.Value) = 'true')
+          else
+            Result  :=  False;
+        end;
+      jsNull    :
+        begin
+          if  Self <> nil then
+            Result  :=  Self.Value
+          else
+            Result  :=  Null;
+        end;
+      jsList    :
+        begin
+          if  Self <> nil then
+            Result  :=  Self.Value;
+        end;
+      jsObject  :
+        begin
+          if  Self <> nil then
+            Result  :=  Self.Value
+          else
+            Result  :=  Null;
+        end;
+    end;
+
+  finally
+    {$IF CompilerVersion <= 15} //Delphi 6 and old
+    SysUtils.DecimalSeparator := DecimalSeparator;
+    SysUtils.ThousandSeparator := ThousandSeparator;
+    SysUtils.DateSeparator := DateSeparator;
+    SysUtils.TimeSeparator := TimeSeparator;
+    SysUtils.ShortDateFormat := ShortDateFormat;
+    SysUtils.LongDateFormat := LongDateFormat;
+    SysUtils.ShortDateFormat := ShortDateFormat;
+    SysUtils.LongTimeFormat := LongTimeFormat;
+    {$IFEND}  
   end;
 end;
 
@@ -627,7 +668,18 @@ end;
 
 function TRscJSONbase.ToJson: string;
 var
+{$IF CompilerVersion <= 15} //Delphi 6 and old
+  DecimalSeparator: Char;
+  ThousandSeparator: Char;
+  DateSeparator: Char;
+  TimeSeparator: Char;
+  ShortDateFormat: string;
+  LongDateFormat: string;
+  ShortTimeFormat: string;
+  LongTimeFormat: string;
+{$ELSE}
   fs: TFormatSettings;
+{$IFEND}
   pt1, pt0, pt2: PChar;
   ptsz: cardinal;
 
@@ -646,7 +698,7 @@ var
       begin
         ReallocMem(pt0, ptsz + delta);
         {$IF CompilerVersion >= 20.0} // Delphi 2009 and later
-        pt1 := Pointer(NativeUInt(pt0) + ptsz); // CorreÃ§Ã£o na atribuiÃ§Ã£o de pt1
+        pt1 := Pointer(NativeUInt(pt0) + ptsz); // Correção na atribuição de pt1
         {$ELSE}
         pt1 := pointer(cardinal(pt0) + ptsz);
         {$IFEND}
@@ -691,7 +743,11 @@ var
     if not assigned(obj) then exit;
     if obj is TRscJSONnumber then
       begin
+        {$IF CompilerVersion >= 16} //Delphi 7 and last
         mem_write(FloatToStr(TRscJSONnumber(obj).FValue, fs));
+        {$ELSE}
+        mem_write(FloatToStr(TRscJSONnumber(obj).FValue));
+        {$IFEND}
       end
     else if obj is TRscJSONstring then
       begin
@@ -800,31 +856,55 @@ begin
   {$IF CompilerVersion >= 24} // Delphi XE3 and newer
     {$IF Defined(MSWINDOWS)}
       fs := TFormatSettings.Create('pt-BR');
+      fs.DecimalSeparator := '.';//json sempre será¡ (.) ponto
     {$ELSE}
       fs := TFormatSettings.Invariant; // Use invariant settings for non-Windows platforms
+      fs.DecimalSeparator := '.';//json sempre será¡ (.) ponto
     {$IFEND}
-  {$ELSEIF CompilerVersion >= 15} // Delphi 6 and 7 do not have GetLocaleFormatSettings
+  {$ELSEIF CompilerVersion >= 16} // Delphi 6 do not have GetLocaleFormatSettings
     GetLocaleFormatSettings(GetThreadLocale, fs);
+    fs.DecimalSeparator := '.';//json sempre será¡ (.) ponto
   {$ELSE}
-    fs.DecimalSeparator := '.';
-    fs.ThousandSeparator := ',';
-    fs.DateSeparator := '/';
-    fs.TimeSeparator := ':';
-    fs.ShortDateFormat := 'dd/mm/yyyy';
-    fs.LongDateFormat := 'dddd, dd mmmm yyyy';
-    fs.ShortTimeFormat := 'hh:nn';
-    fs.LongTimeFormat := 'hh:nn:ss';
+  DecimalSeparator := SysUtils.DecimalSeparator;
+  ThousandSeparator := SysUtils.ThousandSeparator;
+  DateSeparator  := SysUtils.DateSeparator;
+  TimeSeparator  := SysUtils.TimeSeparator;
+  ShortDateFormat  := SysUtils.ShortDateFormat;
+  LongDateFormat  := SysUtils.LongDateFormat;
+  ShortTimeFormat := SysUtils.ShortDateFormat;
+  LongTimeFormat  := SysUtils.LongTimeFormat;
   {$IFEND}
 
-  fs.DecimalSeparator := '.';
-  pt0 := nil;
-  get_more_memory;
-  gn_base(Self);
-  mem_ch(#0);
-  result := string(pt0);
-  freemem(pt0);
-end;
-
+  try
+    {$IF CompilerVersion <= 15} //Delphi 6 and old
+    SysUtils.DecimalSeparator := '.';
+    SysUtils.ThousandSeparator := ',';
+    SysUtils.DateSeparator := '/';
+    SysUtils.TimeSeparator := ':';
+    SysUtils.ShortDateFormat := 'dd/mm/yyyy';
+    SysUtils.LongDateFormat := 'dddd, dd mmmm yyyy';
+    SysUtils.ShortDateFormat := 'hh:nn';
+    SysUtils.LongTimeFormat := 'hh:nn:ss';
+    {$IFEND}
+    pt0 := nil;
+    get_more_memory;
+    gn_base(Self);
+    mem_ch(#0);
+    result := string(pt0);
+    freemem(pt0);
+  finally
+    {$IF CompilerVersion <= 15} //Delphi 6 and old
+    SysUtils.DecimalSeparator := DecimalSeparator;
+    SysUtils.ThousandSeparator := ThousandSeparator;
+    SysUtils.DateSeparator := DateSeparator;
+    SysUtils.TimeSeparator := TimeSeparator;
+    SysUtils.ShortDateFormat := ShortDateFormat;
+    SysUtils.LongDateFormat := LongDateFormat;
+    SysUtils.ShortDateFormat := ShortDateFormat;
+    SysUtils.LongTimeFormat := LongTimeFormat;
+    {$IFEND}
+  end;
+end;  
 
 procedure TRscJSONbase.SaveToFile(dstname: string);
 var
@@ -1487,7 +1567,18 @@ end;
 
 class function TRscJSON.LoadFromString(const JsonStr: string): TRscJSONbase;
 var
+{$IF CompilerVersion <= 15} //Delphi 6 and old
+  DecimalSeparator: Char;
+  ThousandSeparator: Char;
+  DateSeparator: Char;
+  TimeSeparator: Char;
+  ShortDateFormat: string;
+  LongDateFormat: string;
+  ShortTimeFormat: string;
+  LongTimeFormat: string;
+{$ELSE}
   fs: TFormatSettings;
+{$IFEND}
 
   function js_base(idx: Integer; var ridx: Integer; var o:
     TRscJSONbase): Boolean; forward;
@@ -1617,7 +1708,13 @@ var
     if not result then exit;
     js := TRscJSONnumber.Create;
     ws := copy(JsonStr, ridx, idx - ridx);
+
+    {$IF CompilerVersion >= 16} //Delphi 7 and last
     js.FValue := StrToFloat(ws, fs);
+    {$ELSE}
+    js.FValue := StrToFloat(ws);
+    {$IFEND}
+
     add_child(o, TRscJSONbase(js));
     ridx := idx;
   end;
@@ -1846,37 +1943,60 @@ begin
   {$IF CompilerVersion >= 24} // Delphi XE3 and newer
     {$IF Defined(MSWINDOWS)}
       fs := TFormatSettings.Create('pt-BR');
+      fs.DecimalSeparator := '.';//json sempre será¡ (.) ponto
     {$ELSE}
       fs := TFormatSettings.Invariant; // Use invariant settings for non-Windows platforms
+      fs.DecimalSeparator := '.';//json sempre será¡ (.) ponto
     {$IFEND}
-  {$ELSEIF CompilerVersion >= 15} // Delphi 6 and 7 do not have GetLocaleFormatSettings
+  {$ELSEIF CompilerVersion >= 16} // Delphi 6 do not have GetLocaleFormatSettings
     GetLocaleFormatSettings(GetThreadLocale, fs);
+    fs.DecimalSeparator := '.';//json sempre será¡ (.) ponto
   {$ELSE}
-    fs.DecimalSeparator := '.';
-    fs.ThousandSeparator := ',';
-    fs.DateSeparator := '/';
-    fs.TimeSeparator := ':';
-    fs.ShortDateFormat := 'dd/mm/yyyy';
-    fs.LongDateFormat := 'dddd, dd mmmm yyyy';
-    fs.ShortTimeFormat := 'hh:nn';
-    fs.LongTimeFormat := 'hh:nn:ss';
+  DecimalSeparator := SysUtils.DecimalSeparator;
+  ThousandSeparator := SysUtils.ThousandSeparator;
+  DateSeparator  := SysUtils.DateSeparator;
+  TimeSeparator  := SysUtils.TimeSeparator;
+  ShortDateFormat  := SysUtils.ShortDateFormat;
+  LongDateFormat  := SysUtils.LongDateFormat;
+  ShortTimeFormat := SysUtils.ShortDateFormat;
+  LongTimeFormat  := SysUtils.LongTimeFormat;
   {$IFEND}
-
-
-  fs.DecimalSeparator := '.';
-
-  result := nil;
-  if JsonStr = '' then exit;
   try
-    idx := 1;
-    if copy(JsonStr,idx,3)=#239#187#191 then
-      begin
-        inc(idx,3);
-        if idx>length(JsonStr) then exit;
-      end;
-    if not js_base(idx, idx, result) then FreeAndNil(result);
-  except
-    if assigned(result) then FreeAndNil(result);
+    {$IF CompilerVersion <= 15} //Delphi 6 and old
+    SysUtils.DecimalSeparator := '.';
+    SysUtils.ThousandSeparator := ',';
+    SysUtils.DateSeparator := '/';
+    SysUtils.TimeSeparator := ':';
+    SysUtils.ShortDateFormat := 'dd/mm/yyyy';
+    SysUtils.LongDateFormat := 'dddd, dd mmmm yyyy';
+    SysUtils.ShortDateFormat := 'hh:nn';
+    SysUtils.LongTimeFormat := 'hh:nn:ss';
+    {$IFEND}
+
+    result := nil;
+    if JsonStr = '' then exit;
+    try
+      idx := 1;
+      if copy(JsonStr,idx,3)=#239#187#191 then
+        begin
+          inc(idx,3);
+          if idx>length(JsonStr) then exit;
+        end;
+      if not js_base(idx, idx, result) then FreeAndNil(result);
+    except
+      if assigned(result) then FreeAndNil(result);
+    end;
+  finally
+    {$IF CompilerVersion <= 15} //Delphi 6 and old
+    SysUtils.DecimalSeparator := DecimalSeparator;
+    SysUtils.ThousandSeparator := ThousandSeparator;
+    SysUtils.DateSeparator := DateSeparator;
+    SysUtils.TimeSeparator := TimeSeparator;
+    SysUtils.ShortDateFormat := ShortDateFormat;
+    SysUtils.LongDateFormat := LongDateFormat;
+    SysUtils.ShortDateFormat := ShortDateFormat;
+    SysUtils.LongTimeFormat := LongTimeFormat;
+    {$IFEND}
   end;
 end;
 
